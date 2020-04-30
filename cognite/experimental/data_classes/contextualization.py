@@ -42,7 +42,11 @@ class ContextualizationJob(CogniteResource):
         self.start_timestamp = data.get("startTimestamp")
         self.request_timestamp = self.request_timestamp or data.get("requestTimestamp")
         self.error_message = data.get("errorMessage")
-        self._result = {k: v for k, v in data.items() if k not in {"status", "jobId", "errorMessage"}}
+        self._result = {
+            k: v
+            for k, v in data.items()
+            if k not in {"status", "jobId", "errorMessage"} and not k.endswith("Timestamp")
+        }
         return self.status
 
     def wait_for_completion(self, interval=1):
@@ -144,7 +148,7 @@ class EntityMatchingModel(ContextualizationModel):
         self.wait_for_completion()
         return self._cognite_client.entity_matching._run_job(job_path=f"/{self.model_id}/predict", items=list(entities))
 
-    def predict_ml(self, match_from: List[Dict], match_to: List[Dict]) -> ContextualizationJob:
+    def predict_ml(self, match_from: List[Dict], match_to: List[Dict], num_matches=1) -> ContextualizationJob:
         """Predict entity matching.
 
         Args:
@@ -158,6 +162,7 @@ class EntityMatchingModel(ContextualizationModel):
             match_from=self.dump_entities(match_from),
             match_to=self.dump_entities(match_to),
             model_id=self.model_id,
+            num_matches=num_matches,
         )
 
     @staticmethod
